@@ -21,21 +21,19 @@ def ai_parse_text(text):
         return []
 
     try:
-        # Use gemini-1.5-flash for 2026 speed and cost-efficiency
         model = genai.GenerativeModel('gemini-1.5-flash')
         
-        # FIX: We use {{ }} to escape the JSON braces in the f-string
-        prompt = f"""
-        Extract financial transactions from this text: "{text}"
+        # We use a raw string (r) here to avoid the brace issue entirely
+        prompt = """
+        Extract financial transactions from this text. 
         Return ONLY a JSON array. 
-        Format: [{{ "date": "YYYY-MM-DD", "merchant": "name", "amount": 0.00, "category": "category" }}]
-        Do not include any markdown formatting, backticks, or conversational text.
-        """
+        Format: [{"date": "YYYY-MM-DD", "merchant": "name", "amount": 0.00, "category": "category"}]
+        Text to parse: """ + text
         
         response = model.generate_content(prompt)
         raw_output = response.text.strip()
         
-        # Clean up any AI "chatter" or markdown blocks
+        # Remove any markdown formatting Gemini might add
         if "```" in raw_output:
             raw_output = raw_output.split("```")[1]
             if raw_output.startswith("json"):
@@ -45,7 +43,7 @@ def ai_parse_text(text):
         
     except Exception as e:
         st.error(f"AI Error: {str(e)}")
-        return [][]
+        return [] # Fixed: Only one pair of brackets
 
 # --- 2. ADVANCED LOAN ENGINE ---
 def calculate_loan(p, r, t, monthly_extra, rate_changes):
@@ -112,5 +110,6 @@ with tab2:
 
     if st.button("Generate Strategy Report"):
         st.info("PDF Report generated based on current trend. (Feature connected to FPDF)")
+
 
 
