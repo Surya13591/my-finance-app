@@ -23,7 +23,7 @@ def ai_parse_text(text):
     try:
         # Use the standard model name. 
         # In 2026, 'gemini-1.5-flash' is the most compatible across all API versions.
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        model = genai.GenerativeModel('gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-pro')
         
         prompt = """
         Extract financial transactions from this text. 
@@ -118,6 +118,7 @@ with tab2:
 
     if st.button("Generate Strategy Report"):
         st.info("PDF Report generated based on current trend. (Feature connected to FPDF)")
+
 
 
 
