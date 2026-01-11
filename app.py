@@ -21,19 +21,21 @@ def ai_parse_text(text):
         return []
 
     try:
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        # We use the most stable model name for 2026
+        # If gemini-1.5-flash failed, gemini-1.5-flash-latest or gemini-2.0-flash is the fix
+        model_name = 'gemini-1.5-flash-latest' 
+        model = genai.GenerativeModel(model_name)
         
-        # We use a raw string (r) here to avoid the brace issue entirely
         prompt = """
         Extract financial transactions from this text. 
         Return ONLY a JSON array. 
         Format: [{"date": "YYYY-MM-DD", "merchant": "name", "amount": 0.00, "category": "category"}]
-        Text to parse: """ + text
+        Text: """ + text
         
         response = model.generate_content(prompt)
         raw_output = response.text.strip()
         
-        # Remove any markdown formatting Gemini might add
+        # Standard cleaning of markdown
         if "```" in raw_output:
             raw_output = raw_output.split("```")[1]
             if raw_output.startswith("json"):
@@ -42,8 +44,15 @@ def ai_parse_text(text):
         return json.loads(raw_output)
         
     except Exception as e:
-        st.error(f"AI Error: {str(e)}")
-        return [] # Fixed: Only one pair of brackets
+        # If it still fails, let's try the generic 'gemini-pro' as a backup
+        st.info("Attempting backup model connection...")
+        try:
+            model = genai.GenerativeModel('gemini-pro')
+            response = model.generate_content(prompt)
+            return json.loads(response.text.strip())
+        except:
+            st.error(f"AI Error: {str(e)}")
+            return []
 
 # --- 2. ADVANCED LOAN ENGINE ---
 def calculate_loan(p, r, t, monthly_extra, rate_changes):
@@ -110,6 +119,7 @@ with tab2:
 
     if st.button("Generate Strategy Report"):
         st.info("PDF Report generated based on current trend. (Feature connected to FPDF)")
+
 
 
 
