@@ -21,10 +21,9 @@ def ai_parse_text(text):
         return []
 
     try:
-        # We use the most stable model name for 2026
-        # If gemini-1.5-flash failed, gemini-1.5-flash-latest or gemini-2.0-flash is the fix
-        model_name = 'gemini-1.5-flash-latest' 
-        model = genai.GenerativeModel(model_name)
+        # Use the standard model name. 
+        # In 2026, 'gemini-1.5-flash' is the most compatible across all API versions.
+        model = genai.GenerativeModel('gemini-1.5-flash')
         
         prompt = """
         Extract financial transactions from this text. 
@@ -33,9 +32,11 @@ def ai_parse_text(text):
         Text: """ + text
         
         response = model.generate_content(prompt)
+        
+        # Accessing the text response safely
         raw_output = response.text.strip()
         
-        # Standard cleaning of markdown
+        # Standard cleaning of markdown blocks
         if "```" in raw_output:
             raw_output = raw_output.split("```")[1]
             if raw_output.startswith("json"):
@@ -44,8 +45,7 @@ def ai_parse_text(text):
         return json.loads(raw_output)
         
     except Exception as e:
-        # If it still fails, let's try the generic 'gemini-pro' as a backup
-        st.info("Attempting backup model connection...")
+        # Final fallback: If Flash fails, try the standard Pro model
         try:
             model = genai.GenerativeModel('gemini-pro')
             response = model.generate_content(prompt)
@@ -53,7 +53,6 @@ def ai_parse_text(text):
         except:
             st.error(f"AI Error: {str(e)}")
             return []
-
 # --- 2. ADVANCED LOAN ENGINE ---
 def calculate_loan(p, r, t, monthly_extra, rate_changes):
     balance = p
@@ -119,6 +118,7 @@ with tab2:
 
     if st.button("Generate Strategy Report"):
         st.info("PDF Report generated based on current trend. (Feature connected to FPDF)")
+
 
 
 
