@@ -17,19 +17,34 @@ else:
 
 # --- 1. AI PARSING LOGIC ---
 def ai_parse_text(text):
-    model = genai.GenerativeModel('gemini-1.5-flash')
-    prompt = f"""
-    Act as a Financial Data Architect. Extract transactions from this text:
-    '{text}'
-    Return ONLY a JSON array with keys: 'date', 'merchant', 'amount', 'category'.
-    Clean merchant names. If amount is 'debited', it's positive. If 'credited', it's negative.
-    """
+    if not text.strip():
+        return []
+
     try:
+        model = genai.GenerativeModel('gemini-1.5-flash')
+        # We add a stricter prompt to force ONLY JSON output
+        prompt = f"""
+        Extract financial transactions from this text: "{text}"
+        Return ONLY a JSON array. 
+        Format: [{"date": "YYYY-MM-DD", "merchant": "name", "amount": 0.00, "category": "category"}]
+        Do not include any markdown, backticks, or extra words.
+        """
+        
         response = model.generate_content(prompt)
-        # Strip markdown code blocks if present
-        clean_json = response.text.replace('```json', '').replace('```', '').strip()
-        return json.loads(clean_json)
-    except:
+        
+        # DEBUG: Show the raw response if it fails
+        raw_output = response.text.strip()
+        
+        # Clean the output in case Gemini adds ```json blocks
+        if "```" in raw_output:
+            raw_output = raw_output.split("```")[1]
+            if raw_output.startswith("json"):
+                raw_output = raw_output[4:]
+        
+        return json.loads(raw_output)
+        
+    except Exception as e:
+        st.error(f"AI Error: {str(e)}") # This will tell us exactly why it failed
         return []
 
 # --- 2. ADVANCED LOAN ENGINE ---
@@ -97,3 +112,4 @@ with tab2:
 
     if st.button("Generate Strategy Report"):
         st.info("PDF Report generated based on current trend. (Feature connected to FPDF)")
+
