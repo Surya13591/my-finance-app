@@ -21,31 +21,31 @@ def ai_parse_text(text):
         return []
 
     try:
+        # Use gemini-1.5-flash for 2026 speed and cost-efficiency
         model = genai.GenerativeModel('gemini-1.5-flash')
-        # We add a stricter prompt to force ONLY JSON output
+        
+        # FIX: We use {{ }} to escape the JSON braces in the f-string
         prompt = f"""
         Extract financial transactions from this text: "{text}"
         Return ONLY a JSON array. 
-        Format: [{"date": "YYYY-MM-DD", "merchant": "name", "amount": 0.00, "category": "category"}]
-        Do not include any markdown, backticks, or extra words.
+        Format: [{{ "date": "YYYY-MM-DD", "merchant": "name", "amount": 0.00, "category": "category" }}]
+        Do not include any markdown formatting, backticks, or conversational text.
         """
         
         response = model.generate_content(prompt)
-        
-        # DEBUG: Show the raw response if it fails
         raw_output = response.text.strip()
         
-        # Clean the output in case Gemini adds ```json blocks
+        # Clean up any AI "chatter" or markdown blocks
         if "```" in raw_output:
             raw_output = raw_output.split("```")[1]
             if raw_output.startswith("json"):
-                raw_output = raw_output[4:]
+                raw_output = raw_output[4:].strip()
         
         return json.loads(raw_output)
         
     except Exception as e:
-        st.error(f"AI Error: {str(e)}") # This will tell us exactly why it failed
-        return []
+        st.error(f"AI Error: {str(e)}")
+        return [][]
 
 # --- 2. ADVANCED LOAN ENGINE ---
 def calculate_loan(p, r, t, monthly_extra, rate_changes):
@@ -112,4 +112,5 @@ with tab2:
 
     if st.button("Generate Strategy Report"):
         st.info("PDF Report generated based on current trend. (Feature connected to FPDF)")
+
 
